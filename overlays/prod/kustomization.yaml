@@ -25,7 +25,6 @@ images:
     # Link thực tế trên GCP (Initial value)
     newName: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend
     newTag: "initial-tag"
-  images:
   - name: frontend-app  # <--- Khớp với placeholder trong values.yaml
     # Link thực tế trên GCP (Initial value)
     newName: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend
