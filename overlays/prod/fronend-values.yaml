@@ -1,0 +1,34 @@
+# Frontend cần ít nhất 2 replicas để đảm bảo user không bị gián đoạn
+replicaCount: 2
+
+image:
+  # Đặt tên ngắn gọn làm placeholder
+  repository: frontend-app
+  tag: "1.0.0" # Tag gì cũng được, sẽ bị ghi đè
+
+service:
+  type: ClusterIP
+  port: 80 # Nginx thường expose port 80
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+
+# Chiến lược Rollout cho Frontend
+# Có thể cấu hình khác Backend một chút (ví dụ tự động chạy nhanh hơn)
+rollout:
+  steps:
+    - setWeight: 10
+    - pause: { duration: 1m } # Tự động chạy tiếp sau 1 phút nếu không có lỗi (metric analysis)
+    - setWeight: 40
+    - pause: { duration: 30s }
+    - setWeight: 100
+
+ingress:
+  enabled: true
+  host: "web-prod.servicefoundry.org"
+  previewHost: "web-prod-preview.servicefoundry.org" # URL riêng để test bản mới trước khi promote    

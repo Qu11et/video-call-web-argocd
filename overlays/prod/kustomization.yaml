@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: video-call-prod
+
+# Định nghĩa việc render Helm Chart
+helmCharts:
+  # 1. Render cho Backend
+  - name: video-call-web
+    releaseName: backend-app
+    version: 0.1.0
+    repo: ../../charts # Trỏ về thư mục chart nội bộ
+    valuesFile: backend-values.yaml
+    
+  # 2. Render cho Frontend
+  - name: video-call-web
+    releaseName: frontend-app
+    version: 0.1.0
+    repo: ../../charts
+    valuesFile: frontend-values.yaml
+
+# Đây là nơi GitHub Actions (từ Phần 1) sẽ tự động cập nhật image tag
+images:
+  - name: backend-app  # <--- Khớp với placeholder trong values.yaml
+    # Link thực tế trên GCP (Initial value)
+    newName: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend
+    newTag: "initial-tag"
+  images:
+  - name: frontend-app  # <--- Khớp với placeholder trong values.yaml
+    # Link thực tế trên GCP (Initial value)
+    newName: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend
+    newTag: "initial-tag"

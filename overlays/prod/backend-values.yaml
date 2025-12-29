@@ -1,0 +1,36 @@
+# Cấu hình số lượng Replica cho High Availability
+replicaCount: 3
+
+image:
+  # Đặt tên ngắn gọn làm placeholder
+  repository: backend-app
+  tag: "1.0.0" # Tag gì cũng được, sẽ bị ghi đè
+
+service:
+  type: ClusterIP
+  port: 8080 # Port nội bộ của Spring Boot container
+
+# Cấu hình tài nguyên (Rất quan trọng cho Prod)
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+# Cấu hình chiến lược Rollout (Canary)
+rollout:
+  steps:
+    - setWeight: 20
+    # Pause vô thời hạn (null) để chờ Human Review trên ArgoCD UI
+    # Developer/QA phải bấm "Promote" trên giao diện Argo thì mới chạy tiếp
+    - pause: {} 
+    - setWeight: 50
+    - pause: { duration: 30s }
+    - setWeight: 100
+
+ingress:
+  enabled: true
+  host: "api-prod.servicefoundry.org"
+  previewHost: "api-prod-preview.servicefoundry.org"    

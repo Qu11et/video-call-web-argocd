@@ -1,0 +1,39 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "video-call-web.fullname" . }}
+  labels:
+    {{- include "video-call-web.labels" . | nindent 4 }}
+  annotations:
+    # Nếu dùng Nginx Ingress Controller
+    kubernetes.io/ingress.class: nginx
+    # Annotation để Argo Rollouts biết Ingress nào để quản lý (quan trọng)
+    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  rules:
+    # Rule cho Stable Domain (người dùng thật)
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "video-call-web.fullname" . }}
+                port:
+                  number: {{ .Values.service.port }}
+    # Rule cho Preview Domain (Dành cho Dev/QA test bản Canary)
+    {{- if .Values.ingress.previewHost }}
+    - host: {{ .Values.ingress.previewHost }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "video-call-web.fullname" . }}-preview
+                port:
+                  number: {{ .Values.service.port }}
+    {{- end }}
+{{- end }}

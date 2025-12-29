@@ -1,0 +1,23 @@
+replicaCount: 1
+
+image:
+  repository: nginx # Placeholder, sẽ bị override bởi Kustomize/ArgoCD
+  pullPolicy: IfNotPresent
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources: {} 
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+ingress:
+  enabled: false
+  host: "example.com"
+  previewHost: ""  

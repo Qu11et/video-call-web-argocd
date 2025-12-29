@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ include "video-call-web.fullname" . }}
+  labels:
+    {{- include "video-call-web.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      {{- include "video-call-web.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "video-call-web.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+  # --- ARGO ROLLOUT STRATEGY ---
+  strategy:
+    canary:
+      # Tham chiếu đến 2 Services
+      canaryService: {{ include "video-call-web.fullname" . }}-preview
+      stableService: {{ include "video-call-web.fullname" . }}
+      trafficRouting:
+        # Ví dụ dùng Nginx Ingress (hoặc Istio/ALB tùy bạn chọn)
+        nginx:
+          stableIngress: {{ include "video-call-web.fullname" . }}
+      steps:
+        - setWeight: 20
+        - pause: {duration: 1m} # Chạy 20% traffic trong 1 phút rồi tự động tăng
+        - setWeight: 50
+        - pause: {duration: 10s}
+        - setWeight: 100

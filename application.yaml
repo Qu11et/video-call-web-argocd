@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: video-call-prod
+  namespace: argocd
+spec:
+  project: default
+  
+  # Nguồn: Lấy cấu hình từ đâu?
+  source:
+    repoURL: https://github.com/Qu11et/video-call-web-argocd.git
+    targetRevision: main
+    path: overlays/prod # Trỏ đúng vào thư mục chứa Kustomization Prod
+  
+  # Đích: Triển khai vào đâu?
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: video-call-prod # Namespace chứa ứng dụng (App sẽ tự tạo nếu chưa có)
+
+  # Chính sách đồng bộ
+  syncPolicy:
+    automated:
+      prune: true    # Tự động xóa resource trên K8s nếu file bị xóa trên Git
+      selfHeal: true # Tự động sửa lại nếu ai đó sửa tay trên K8s (chống Configuration Drift)
+    syncOptions:
+      - CreateNamespace=true # Tự động tạo namespace video-call-prod
