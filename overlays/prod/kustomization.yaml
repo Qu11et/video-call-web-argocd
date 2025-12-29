@@ -2,20 +2,24 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: video-call-prod
 
+# 1. Định nghĩa thư mục gốc chứa các Charts
+helmGlobals:
+  chartHome: ../../charts
+
 helmCharts:
   # --- Backend ---
-  - name: ../../charts/video-call-web  # <--- SỬA: Trỏ thẳng đường dẫn vào đây
+  - name: video-call-web       # Chỉ cần tên thư mục (nằm trong chartHome)
     releaseName: backend-app
     version: 0.1.0
     valuesFile: backend-values.yaml
-    # XÓA DÒNG: repo: ../../charts
+    # KHÔNG CÓ dòng repo
     
   # --- Frontend ---
-  - name: ../../charts/video-call-web  # <--- SỬA: Trỏ thẳng đường dẫn vào đây
+  - name: video-call-web       # Tái sử dụng chart cùng tên
     releaseName: frontend-app
     version: 0.1.0
     valuesFile: frontend-values.yaml
-    # XÓA DÒNG: repo: ../../charts
+    # KHÔNG CÓ dòng repo
 
 images:
   - name: backend-app
