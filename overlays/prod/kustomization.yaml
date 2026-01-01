@@ -6,26 +6,26 @@ namespace: video-call-prod
 helmGlobals:
   chartHome: ../../charts
 
-helmCharts:
   # --- Backend ---
-  - name: video-call-web       # Chỉ cần tên thư mục (nằm trong chartHome)
-    releaseName: backend-app
-    version: 0.1.0
-    valuesFile: backend-values.yaml
     # KHÔNG CÓ dòng repo
     
   # --- Frontend ---
-  - name: video-call-web       # Tái sử dụng chart cùng tên
-    releaseName: frontend-app
-    version: 0.1.0
-    valuesFile: frontend-values.yaml
+helmCharts:
+- name: video-call-web
+  releaseName: backend-app
+  valuesFile: backend-values.yaml
+  version: 0.1.0
+- name: video-call-web
+  releaseName: frontend-app
+  valuesFile: frontend-values.yaml
+  version: 0.1.0
     # KHÔNG CÓ dòng repo
 
-images:
-  - name: backend-app
-    newName: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend
-    newTag: "initial-tag"
     
-  - name: frontend-app
-    newName: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend
-    newTag: "initial-tag"
+images:
+- name: backend-app
+  newName: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend
+  newTag: 4281ca3
+- name: frontend-app
+  newName: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend
+  newTag: 4281ca3
