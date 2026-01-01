@@ -1,5 +1,5 @@
 # Cấu hình số lượng Replica cho High Availability
-replicaCount: 3
+replicaCount: 2
 
 image:
   # Đặt tên ngắn gọn làm placeholder
@@ -14,10 +14,16 @@ service:
 resources:
   requests:
     memory: "512Mi"
-    cpu: "250m"
+    cpu: "100m"
   limits:
-    memory: "1Gi"
-    cpu: "500m"
+    memory: "768Mi"
+    cpu: "800m"
+  livenessProbe:
+    initialDelaySeconds: 60 # Chờ 60s để app khởi động xong mới check
+    periodSeconds: 10
+  readinessProbe:
+    initialDelaySeconds: 45
+    periodSeconds: 10
 
 # Cấu hình chiến lược Rollout (Canary)
 rollout:
@@ -34,3 +40,9 @@ ingress:
   enabled: true
   host: "api-prod.servicefoundry.org"
   previewHost: "api-prod-preview.servicefoundry.org"    
+
+env:
+  - name: JAVA_TOOL_OPTIONS
+    # Bảo JVM chỉ dùng tối đa 75% lượng RAM của container (tức là 75% của 768Mi)
+    # Phần còn lại để cho OS và Metaspace.
+    value: "-XX:MaxRAMPercentage=75.0"  
