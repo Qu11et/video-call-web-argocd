@@ -25,7 +25,7 @@ helmCharts:
 images:
 - name: backend-app
   newName: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend
-  newTag: initial-tag
+  newTag: 4281ca3
 - name: frontend-app
   newName: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend
   newTag: 4281ca3
