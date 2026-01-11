@@ -33,7 +33,7 @@ redis:
 # =====================================================
 mongodb:
   enabled:  true
-  
+
   # Sử dụng image tag mới nhất và stable
   image:
     registry: asia-southeast1-docker.pkg.dev
@@ -57,3 +57,7 @@ mongodb:
   
   persistence: 
     enabled: false
+
+  volumePermissions:
+    enabled: true
+      
