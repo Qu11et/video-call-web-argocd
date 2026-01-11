@@ -1,0 +1,17 @@
+apiVersion: v2
+name: infrastructure
+description: Umbrella chart for databases (Redis, MongoDB)
+type: application
+version: 0.1.0
+appVersion: "1.0"
+
+dependencies:
+  - name: redis
+    version: 17.15.2  # Hoặc dùng 17.x để lấy version mới nhất trong dải 17
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis. enabled
+    
+  - name: mongodb
+    version: 13.18.5  # Hoặc dùng 13.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: mongodb.enabled

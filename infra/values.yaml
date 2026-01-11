@@ -1,0 +1,50 @@
+# Cấu hình Redis
+redis:
+  enabled: true
+  
+  # Tắt authentication để đơn giản hóa (Chỉ nên dùng trong môi trường dev/test)
+  auth:
+    enabled: false
+  
+  # Chạy ở chế độ standalone (1 pod duy nhất, không có replication)
+  architecture: standalone
+  
+  # Giảm tài nguyên để phù hợp với cụm 2 node
+  master:
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "500m"
+    
+    persistence:
+      enabled: false  # Tắt persistent volume để test nhanh (Prod nên bật)
+
+# Cấu hình MongoDB
+mongodb:
+  enabled: true
+  
+  # Cấu hình authentication
+  auth:
+    enabled:  true
+    rootPassword: "password123"  # ⚠️ Prod nên dùng Secret hoặc External Secrets
+    # rootUser: "admin"  # Mặc định là 'root'
+  
+  # Chạy ở chế độ standalone (không replica set)
+  architecture: standalone
+  
+  # Giảm tài nguyên
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "1000m"
+  
+  persistence:
+    enabled: false  # Tắt PV để test (Prod nên bật và cấu hình storageClass)
+    # size: 8Gi
+    # storageClass: "standard"  # Thay bằng storageClass thực tế trong cluster
