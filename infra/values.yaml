@@ -1,15 +1,21 @@
-# Cấu hình Redis
+# =====================================================
+# REDIS - Fix Image Pull Error
+# =====================================================
 redis:
   enabled: true
   
-  # Tắt authentication để đơn giản hóa (Chỉ nên dùng trong môi trường dev/test)
-  auth:
-    enabled: false
+  # Sử dụng image tag mới nhất và stable
+  image:
+    registry: docker.io
+    repository: bitnami/redis
+    tag: 7.4.1-debian-12-r5
+    pullPolicy: IfNotPresent
   
-  # Chạy ở chế độ standalone (1 pod duy nhất, không có replication)
+  auth:
+    enabled:  false
+  
   architecture: standalone
   
-  # Giảm tài nguyên để phù hợp với cụm 2 node
   master:
     resources:
       requests:
@@ -19,23 +25,28 @@ redis:
         memory: "256Mi"
         cpu: "500m"
     
-    persistence:
-      enabled: false  # Tắt persistent volume để test nhanh (Prod nên bật)
+    persistence: 
+      enabled: false
 
-# Cấu hình MongoDB
+# =====================================================
+# MONGODB - Fix Image Pull Error
+# =====================================================
 mongodb:
-  enabled: true
+  enabled:  true
   
-  # Cấu hình authentication
+  # Sử dụng image tag mới nhất và stable
+  image:
+    registry: docker.io
+    repository: bitnami/mongodb
+    tag: 7.0.14-debian-12-r7
+    pullPolicy: IfNotPresent
+  
   auth:
-    enabled:  true
-    rootPassword: "password123"  # ⚠️ Prod nên dùng Secret hoặc External Secrets
-    # rootUser: "admin"  # Mặc định là 'root'
+    enabled: true
+    rootPassword:  "password123"
   
-  # Chạy ở chế độ standalone (không replica set)
   architecture: standalone
   
-  # Giảm tài nguyên
   resources:
     requests:
       memory: "256Mi"
@@ -44,7 +55,5 @@ mongodb:
       memory: "512Mi"
       cpu: "1000m"
   
-  persistence:
-    enabled: false  # Tắt PV để test (Prod nên bật và cấu hình storageClass)
-    # size: 8Gi
-    # storageClass: "standard"  # Thay bằng storageClass thực tế trong cluster
+  persistence: 
+    enabled: false
