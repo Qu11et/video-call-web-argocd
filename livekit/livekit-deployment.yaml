@@ -30,7 +30,7 @@ spec:
           env:
             # 1. API Keys (Định dạng: Key:Secret)
             - name: LIVEKIT_KEYS
-              value: "devkey:secret"
+              value: "devkey: secret"
             
             # 2. Cấu hình Redis (Kết nối tới Redis tự tạo của bạn)
             - name: LIVEKIT_REDIS_ADDRESS
