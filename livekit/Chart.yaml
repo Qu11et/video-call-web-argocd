@@ -1,0 +1,9 @@
+# livekit/Chart.yaml
+apiVersion: v2
+kind: Chart
+name: livekit-server-wrapper
+version: 0.1.0
+dependencies:
+  - name: livekit-server
+    version: 1.5.0 # Hoặc phiên bản mới nhất bạn kiểm tra trên ArtifactHub
+    repository: https://helm.livekit.io

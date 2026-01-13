@@ -1,0 +1,24 @@
+# livekit-application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: video-call-livekit
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/Qu11et/video-call-web-argocd.git'
+    targetRevision: main
+    path: livekit
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: video-call-prod # Cùng namespace với Redis/Infra
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

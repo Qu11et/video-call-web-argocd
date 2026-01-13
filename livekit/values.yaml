@@ -1,0 +1,41 @@
+# livekit/values.yaml
+
+livekit-server:
+  # 1. QUAN TRỌNG: Cho phép Pod dùng mạng trực tiếp của Node (Miễn phí & Nhanh)
+  hostNetwork: true
+
+  # 2. Cấu hình Key/Secret để App kết nối
+  # Bạn có thể đổi "devkey" và "secret" thành cái khó đoán hơn
+  keys:
+    devkey: secret 
+
+  # 3. Cấu hình cổng mạng
+  port: 7880
+  httpPort: 7880 # Port cho tín hiệu (Signaling)
+  udp_port: 7882
+  
+  # Dải port UDP cho video (WebRTC)
+  rtc:
+    port_range_start: 50000
+    port_range_end: 60000
+    # Bắt buộc khi dùng hostNetwork để nó báo đúng IP cho client
+    use_external_ip: true 
+
+  # 4. Tắt Redis đi kèm (Tiết kiệm RAM)
+  redis:
+    enabled: false
+
+  # 5. Cấu hình kết nối tới Redis tự quản lý của bạn (ở bước trước)
+  # Lưu ý: "video-call-prod" là namespace bạn đang deploy
+  extraEnv:
+    - name: REDIS_HOST
+      value: "redis.video-call-prod.svc.cluster.local"
+    - name: REDIS_PORT
+      value: "6379"
+    - name: REDIS_PASSWORD
+      value: "password123" # Pass bạn đã đặt trong file redis-deployment.yaml
+
+  # 6. Service: Vì dùng hostNetwork nên service type gì không quan trọng lắm
+  # Để ClusterIP cho gọn
+  service:
+    type: ClusterIP
