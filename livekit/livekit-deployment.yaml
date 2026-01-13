@@ -18,6 +18,7 @@ spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet # Để LiveKit vẫn gọi được Redis nội bộ qua DNS
       # -----------------------------------------------------
+      enableServiceLinks: false
       
       containers:
         - name: livekit
