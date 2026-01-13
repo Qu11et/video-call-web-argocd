@@ -46,3 +46,9 @@ env:
     # Bảo JVM chỉ dùng tối đa 75% lượng RAM của container (tức là 75% của 768Mi)
     # Phần còn lại để cho OS và Metaspace.
     value: "-XX:MaxRAMPercentage=75.0"  
+  - name: SPRING_DATA_REDIS_HOST
+    value: "redis.video-call-prod.svc.cluster.local" # Đổi từ redis-master -> redis
+  - name: SPRING_DATA_REDIS_PORT
+    value: "6379"
+  - name: SPRING_DATA_REDIS_PASSWORD
+    value: "password123"
