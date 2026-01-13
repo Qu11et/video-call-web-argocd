@@ -32,6 +32,8 @@ livekit-server:
       value: "6379"
     - name: REDIS_PASSWORD
       value: "password123"
+    - name: LIVEKIT_KEYS
+      value: "devkey:secret"  
 
   service:
     type: ClusterIP
