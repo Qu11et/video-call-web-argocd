@@ -7,7 +7,7 @@ metadata:
 data:
   livekit.yaml: |
     port: 7880
-    http_port: 7880
+    # http_port: 7880
     rtc:
       port_range_start: 50000
       port_range_end: 60000
