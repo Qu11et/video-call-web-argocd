@@ -10,9 +10,6 @@ spec:
     repoURL: 'https://github.com/Qu11et/video-call-web-argocd.git'
     targetRevision: main
     path: livekit
-    helm:
-      valueFiles:
-        - values.yaml
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: video-call-prod # Cùng namespace với Redis/Infra
