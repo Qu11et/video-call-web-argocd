@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'hhttps://github.com/Qu11et/video-call-web-argocd.git' # Thay link git của bạn
+    repoURL: 'https://github.com/Qu11et/video-call-web-argocd.git' # Thay link git của bạn
     targetRevision: main
     path: infra
   destination:

@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'hhttps://github.com/Qu11et/video-call-web-argocd.git'
+    repoURL: 'https://github.com/Qu11et/video-call-web-argocd.git'
     targetRevision: main
     path: web-app
     # Lưu ý: Ingress có thể để chung vào đây hoặc tách ra app riêng tùy bạn
