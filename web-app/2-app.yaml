@@ -15,6 +15,7 @@ data:
     spring.data.redis.host=redis
     spring.data.redis.port=6379
     # Chúng ta sẽ cấu hình LiveKit URL sau khi có IP LoadBalancer
+    livekit.url=ws://34.80.190.105:7880
     livekit.api.key=devkey
     livekit.api.secret=my_super_secure_secret_key_for_dev_only_123
     application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
