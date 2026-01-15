@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/Qu11et/video-call-gitops.git'
+    repoURL: 'https://github.com/Qu11et/video-call-web-gitops.git'
     targetRevision: main
     path: livekit
   destination:
