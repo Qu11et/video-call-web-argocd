@@ -1,0 +1,48 @@
+# 4-ingress.yaml
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: video-call-cert
+  namespace: video-call-prod
+spec:
+  domains:
+    - lkht.id.vn
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: video-call-ingress
+  namespace: video-call-prod
+  annotations:
+    # Dùng IP tĩnh vừa tạo
+    kubernetes.io/ingress.global-static-ip-name: "video-call-ingress-ip"
+    # Kích hoạt chứng chỉ SSL Google quản lý
+    networking.gke.io/managed-certificates: "video-call-cert"
+    # Chuyển hướng HTTP sang HTTPS
+    networking.gke.io/v1beta1.FrontendConfig: "https-redirect"
+spec:
+  defaultBackend:
+    service:
+      name: frontend
+      port:
+        number: 80
+  rules:
+    - host: lkht.id.vn
+      http:
+        paths:
+          # Routing cho Backend API
+          - path: /api/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          # Routing cho Frontend (Mặc định)
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

@@ -1,6 +1,0 @@
-apiVersion: v2
-name: infrastructure
-description: Umbrella chart for databases (Redis, MongoDB)
-type: application
-version: 0.1.0
-appVersion: "1.0"

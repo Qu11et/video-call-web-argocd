@@ -1,0 +1,97 @@
+# 2-app.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: video-call-prod
+data:
+  # Cấu hình Spring Boot đã được chỉnh sửa cho K8s
+  application.properties: |
+    server.port=8080
+    spring.datasource.url=jdbc:postgresql://postgres:5432/video_call_db
+    spring.datasource.username=postgres
+    spring.datasource.password=123456
+    spring.data.mongodb.uri=mongodb://root:password123@mongo:27017/meeting_history_db?authSource=admin
+    spring.data.redis.host=redis
+    spring.data.redis.port=6379
+    # Chúng ta sẽ cấu hình LiveKit URL sau khi có IP LoadBalancer
+    livekit.api.key=devkey
+    livekit.api.secret=my_super_secure_secret_key_for_dev_only_123
+    application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    application.cookie.domain=lkht.id.vn
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: video-call-prod
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: video-call-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          # Thay bằng Image Backend của bạn
+          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-web-app:4281ca3 
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config/application.properties
+              subPath: application.properties
+      volumes:
+        - name: config-volume
+          configMap:
+            name: backend-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: video-call-prod
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: video-call-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          # Thay bằng Image Frontend của bạn
+          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend:260115
+          ports:
+            - containerPort: 80

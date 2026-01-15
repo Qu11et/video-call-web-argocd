@@ -1,0 +1,124 @@
+# 3-livekit.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: livekit-config
+  namespace: video-call-prod
+data:
+  livekit.yaml: |
+    port: 7880
+    rtc:
+      port_range_start: 50000
+      port_range_end: 50010 # Demo dải nhỏ để test trước
+      use_external_ip: true
+      udp_port: 7882
+    redis:
+      address: redis:6379
+    keys:
+      devkey: my_super_secure_secret_key_for_dev_only_123
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit-external
+  namespace: video-call-prod
+spec:
+  # QUAN TRỌNG: LoadBalancer sẽ tự mở Firewall và cấp IP Public
+  type: LoadBalancer
+  externalTrafficPolicy: Local # Tối ưu hóa cho WebRTC
+  selector:
+    app: livekit
+  ports:
+    # Cổng tín hiệu (Signaling)
+    - name: http
+      port: 7880
+      targetPort: 7880
+      protocol: TCP
+    # Cổng UDP chính
+    - name: udp-main
+      port: 7882
+      targetPort: 7882
+      protocol: UDP
+    # Dải cổng UDP WebRTC (Liệt kê thủ công trong K8s standard)
+    # Nếu bạn cần mở hết 100 port, cách tốt nhất là dùng script generate
+    # hoặc quay lại hostNetwork. Nhưng ở đây ta dùng LoadBalancer cho dễ.
+    - name: rtc-50000
+      port: 50000
+      targetPort: 50000
+      protocol: UDP
+    - name: rtc-50001
+      port: 50001
+      targetPort: 50001
+      protocol: UDP
+    - name: rtc-50002
+      port: 50002
+      targetPort: 50002
+      protocol: UDP
+    - name: rtc-50003
+      port: 50003
+      targetPort: 50003
+      protocol: UDP
+    - name: rtc-50004
+      port: 50004
+      targetPort: 50004
+      protocol: UDP
+    - name: rtc-50005
+      port: 50005
+      targetPort: 50005
+      protocol: UDP
+    - name: rtc-50006
+      port: 50006
+      targetPort: 50006
+      protocol: UDP
+    - name: rtc-50007
+      port: 50007
+      targetPort: 50007
+      protocol: UDP
+    - name: rtc-50008
+      port: 50008
+      targetPort: 50008
+      protocol: UDP
+    - name: rtc-50009
+      port: 50009
+      targetPort: 50009
+      protocol: UDP
+    - name: rtc-50010
+      port: 50010
+      targetPort: 50010
+      protocol: UDP          
+    # ... Bạn có thể copy paste thêm port nếu cần test nhiều user ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit
+  namespace: video-call-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: livekit
+  template:
+    metadata:
+      labels:
+        app: livekit
+    spec:
+      # KHÔNG CẦN hostNetwork NỮA!
+      containers:
+        - name: livekit
+          image: livekit/livekit-server:latest
+          command: ["/livekit-server", "--config", "/etc/livekit.yaml"]
+          ports:
+            - containerPort: 7880
+            - containerPort: 7882
+              protocol: UDP
+            - containerPort: 50000
+              protocol: UDP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/livekit.yaml
+              subPath: livekit.yaml
+      volumes:
+        - name: config
+          configMap:
+            name: livekit-config

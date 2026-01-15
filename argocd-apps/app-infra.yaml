@@ -5,22 +5,16 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  
   source:
-    repoURL: https://github.com/Qu11et/video-call-web-argocd.git
+    repoURL: 'https://github.com/Qu11et/video-call-gitops.git' # Thay link git của bạn
     targetRevision: main
     path: infra
-    helm:
-      valueFiles:
-        - values.yaml
-  
   destination:
-    server: https://kubernetes.default.svc
-    namespace: video-call-prod  # Deploy vào namespace riêng cho database
-  
-  syncPolicy: 
+    server: 'https://kubernetes.default.svc'
+    namespace: video-call-prod
+  syncPolicy:
     automated:
-      prune:  true
+      prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true

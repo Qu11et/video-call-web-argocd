@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: video-call-web
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/Qu11et/video-call-gitops.git'
+    targetRevision: main
+    path: web-app
+    # Lưu ý: Ingress có thể để chung vào đây hoặc tách ra app riêng tùy bạn
+    # Nếu để chung thì copy file ingress.yaml vào folder web-app luôn
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: video-call-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
