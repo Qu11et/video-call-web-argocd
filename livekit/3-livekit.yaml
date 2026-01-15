@@ -9,31 +9,28 @@ data:
     port: 7880
     rtc:
       port_range_start: 50000
-      port_range_end: 50019 # Demo dải nhỏ để test trước
+      port_range_end: 50010
       use_external_ip: true
       udp_port: 7882
     redis:
       address: redis:6379
     keys:
       devkey: my_super_secure_secret_key_for_dev_only_123
+
 ---
+# SERVICE 1: CHUYÊN XỬ LÝ UDP (VIDEO/AUDIO)
+# Cái này sẽ tạo ra 1 IP Public riêng (Ví dụ: 35.1.1.1)
 apiVersion: v1
 kind: Service
 metadata:
-  name: livekit-external
+  name: livekit-udp
   namespace: video-call-prod
 spec:
-  # QUAN TRỌNG: LoadBalancer sẽ tự mở Firewall và cấp IP Public
   type: LoadBalancer
-  externalTrafficPolicy: Local # Tối ưu hóa cho WebRTC
+  externalTrafficPolicy: Local
   selector:
     app: livekit
   ports:
-    # Cổng tín hiệu (Signaling)
-    - name: http
-      port: 7880
-      targetPort: 7880
-      protocol: TCP
     # Cổng UDP chính
     - name: udp-main
       port: 7882
@@ -139,7 +136,6 @@ spec:
       labels:
         app: livekit
     spec:
-      # KHÔNG CẦN hostNetwork NỮA!
       containers:
         - name: livekit
           image: livekit/livekit-server:latest
