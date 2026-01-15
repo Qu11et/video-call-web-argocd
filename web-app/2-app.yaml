@@ -20,6 +20,13 @@ data:
     livekit.api.secret=my_super_secure_secret_key_for_dev_only_123
     application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     application.cookie.domain=lkht.id.vn
+    spring.mail.host=smtp.gmail.com
+    spring.mail.port=587
+    spring.mail.username=khautyler@gmail.com
+    # Lưu ý: Đây là App Password (không phải pass đăng nhập gmail), bạn phải tạo trong Google Account Security
+    spring.mail.password=rcmvqygmtbthlotz
+    spring.mail.properties.mail.smtp.auth=true
+    spring.mail.properties.mail.smtp.starttls.enable=true
 ---
 apiVersion: v1
 kind: Service
