@@ -120,6 +120,25 @@ spec:
       targetPort: 50019
       protocol: UDP
     # ... Bạn có thể copy paste thêm port nếu cần test nhiều user ...
+    
+---
+# SERVICE 2: CHUYÊN XỬ LÝ TCP (SIGNALING)
+# Cái này sẽ tạo ra 1 IP Public riêng THỨ HAI (Ví dụ: 35.2.2.2)
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit-tcp
+  namespace: video-call-prod
+spec:
+  type: LoadBalancer
+  selector:
+    app: livekit
+  ports:
+    - name: http
+      port: 7880
+      targetPort: 7880
+      protocol: TCP
+
 ---
 apiVersion: apps/v1
 kind: Deployment
