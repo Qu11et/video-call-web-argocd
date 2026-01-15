@@ -34,6 +34,7 @@ metadata:
   name: backend
   namespace: video-call-prod
 spec:
+  type: NodePort  
   ports:
     - port: 8080
       targetPort: 8080
@@ -76,6 +77,7 @@ metadata:
   name: frontend
   namespace: video-call-prod
 spec:
+  type: NodePort  
   ports:
     - port: 80
       targetPort: 80
