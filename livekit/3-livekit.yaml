@@ -9,7 +9,7 @@ data:
     port: 7880
     rtc:
       port_range_start: 50000
-      port_range_end: 50010 # Demo dải nhỏ để test trước
+      port_range_end: 50019 # Demo dải nhỏ để test trước
       use_external_ip: true
       udp_port: 7882
     redis:
@@ -85,7 +85,43 @@ spec:
     - name: rtc-50010
       port: 50010
       targetPort: 50010
-      protocol: UDP          
+      protocol: UDP      
+    - name: rtc-50011
+      port: 50011
+      targetPort: 50011
+      protocol: UDP
+    - name: rtc-50012
+      port: 50012
+      targetPort: 50012
+      protocol: UDP
+    - name: rtc-50013
+      port: 50013
+      targetPort: 50013
+      protocol: UDP
+    - name: rtc-50014
+      port: 50014
+      targetPort: 50014
+      protocol: UDP
+    - name: rtc-50015
+      port: 50015
+      targetPort: 50015
+      protocol: UDP
+    - name: rtc-50016
+      port: 50016
+      targetPort: 50016
+      protocol: UDP
+    - name: rtc-50017
+      port: 50017
+      targetPort: 50017
+      protocol: UDP
+    - name: rtc-50018
+      port: 50018
+      targetPort: 50018
+      protocol: UDP
+    - name: rtc-50019
+      port: 50019
+      targetPort: 50019
+      protocol: UDP
     # ... Bạn có thể copy paste thêm port nếu cần test nhiều user ...
 ---
 apiVersion: apps/v1
