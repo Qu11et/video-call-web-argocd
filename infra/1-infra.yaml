@@ -67,6 +67,8 @@ spec:
               value: "postgres"
             - name: POSTGRES_PASSWORD
               value: "123456"
+            - name: POSTGRES_DB
+              value: "video_call_db"
           volumeMounts:
             - name: pgdata
               mountPath: /var/lib/postgresql/data
