@@ -18,8 +18,41 @@ data:
     livekit.url=ws://34.80.190.105:7880
     livekit.api.key=devkey
     livekit.api.secret=my_super_secure_secret_key_for_dev_only_123
+
+    spring.application.name=video-call-web-app
+
+    # --- JPA / HIBERNATE CONFIG ---
+    # Tự động cập nhật schema database khi chạy app (create/update/none)
+    spring.jpa.hibernate.ddl-auto=update
+    # Hiển thị câu lệnh SQL trong log để dễ debug
+    spring.jpa.show-sql=true
+    # Dialect giúp Hibernate tạo câu SQL chuẩn cho PostgreSQL
+    spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+    # --- JWT CONFIG (Giữ nguyên) ---
     application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    # Thời gian hết hạn Access Token (1 ngày = 86400000 ms)
+    application.security.jwt.expiration=86400000
+    # Thời gian hết hạn Refresh Token (7 ngày)
+    application.security.jwt.refresh-token.expiration=604800000
+
+    # --- SERVER CONFIG ---
+    server.forward-headers-strategy=framework
+
+    # --- COOKIE CONFIG (Lưu Token an toàn) ---
+    # Domain của cookie: Đặt là tên miền của bạn để cookie hoạt động trên https://lkht.id.vn
     application.cookie.domain=lkht.id.vn
+    # Secure: true (chỉ gửi qua HTTPS). Nếu test localhost thì để false, nhưng lên VPS nên là true.
+    # Tuy nhiên, do Nginx xử lý SSL và chuyển vào trong là HTTP, đôi khi để false an toàn hơn để tránh lỗi logic nội bộ
+    application.cookie.secure=false
+    application.cookie.http-only=true
+    application.cookie.max-age=86400
+
+    # --- CẤU HÌNH REDIS ---
+    spring.data.redis.host=redis
+    spring.data.redis.port=6379
+
+    # --- CẤU HÌNH EMAIL (Gmail SMTP) ---
     spring.mail.host=smtp.gmail.com
     spring.mail.port=587
     spring.mail.username=khautyler@gmail.com
@@ -27,6 +60,7 @@ data:
     spring.mail.password=rcmvqygmtbthlotz
     spring.mail.properties.mail.smtp.auth=true
     spring.mail.properties.mail.smtp.starttls.enable=true
+
 ---
 apiVersion: v1
 kind: Service
