@@ -113,6 +113,19 @@ spec:
           image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend:085bb37
           ports:
             - containerPort: 8080
+
+          env:
+            # ✅ Load JWT secret từ Kubernetes Secret
+            - name: APPLICATION_SECURITY_JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-jwt-secret
+                  key: jwt-secret-key
+            
+            # ✅ Load config từ ConfigMap
+            - name: SPRING_CONFIG_LOCATION
+              value: file:/app/config/application.properties
+                
           volumeMounts:
             - name: config-volume
               mountPath: /app/config
