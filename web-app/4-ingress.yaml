@@ -85,6 +85,24 @@ spec:
     - host: livekit.lkht.id.vn
       http:
         paths:
+          # ✅ THÊM: Route tất cả /rtc/* về LiveKit
+          - path: /rtc
+            pathType: Prefix
+            backend:
+              service:
+                name: livekit-tcp
+                port:
+                  number: 7880
+          
+          # ✅ THÊM: WebSocket signaling
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: livekit-tcp
+                port:
+                  number: 7880
+          
           - path: /
             pathType: Prefix
             backend:

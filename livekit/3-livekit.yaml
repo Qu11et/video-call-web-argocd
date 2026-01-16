@@ -29,15 +29,6 @@ data:
       
       # ✅ BẮT BUỘC: Sử dụng External IP từ LoadBalancer
       use_external_ip: true
-      
-      # ✅ TURN Server Config (giúp bypass NAT/Firewall)
-      turn_servers:
-        - host: livekit.lkht.id.vn
-          port: 7881
-          protocol: tcp
-      
-      # ✅ XÓA dòng ice_lite (không còn support trong v1.7.2)
-      # ice_lite: false  # ← XÓA DÒNG NÀY
     
     # ===================================================================
     # REDIS CONFIG
@@ -64,7 +55,7 @@ data:
     # LOGGING
     # ===================================================================
     logging:
-      level: info
+      level: debug
       sample: false
       json: false
 
@@ -264,7 +255,7 @@ spec:
       
       containers:
         - name: livekit
-          image: livekit/livekit-server:v1.7.2  # ✅ Pin version để tránh breaking changes
+          image: livekit/livekit-server:v1.8.3  # ✅ Pin version để tránh breaking changes
           
           # ✅ Start command với config file
           command: ["/livekit-server"]
