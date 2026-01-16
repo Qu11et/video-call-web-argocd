@@ -197,20 +197,66 @@ spec:
     spec:
       containers:
         - name: livekit
-          image: livekit/livekit-server:v1.8.0 # Hoặc bản mới nhất
-          command: ["/livekit-server", "--config", "/etc/livekit/livekit.yaml"]
+          image: livekit/livekit-server:v1.9.3
           
-          # Không cần set EXTERNAL_IP thủ công nữa, STUN sẽ lo việc đó
+          # ✅ GHI ĐÈ các biến môi trường tự động
+          env:
+            - name: LIVEKIT_PORT
+              value: "7880"  # ✅ Fix lỗi parsing
+            
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          
+          command: 
+            - /livekit-server
+          args:
+            - --config
+            - /etc/livekit/livekit.yaml
+          
           ports:
-            - containerPort: 7880
-            - containerPort: 7881
-            - containerPort: 50000
+            - name: http
+              containerPort: 7880
+              protocol: TCP
+            - name: turn-tcp
+              containerPort: 7881
+              protocol: TCP
+            - name: rtc-start
+              containerPort: 50000
               protocol: UDP
-            - containerPort: 50020
+            - name: rtc-end
+              containerPort: 50020
               protocol: UDP
+          
           volumeMounts:
             - name: config
               mountPath: /etc/livekit
+          
+          # ✅ THÊM: Resource limits
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          
+          # ✅ THÊM: Health checks
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7880
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7880
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      
       volumes:
         - name: config
           configMap:
