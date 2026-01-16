@@ -4,33 +4,31 @@ metadata:
   name: video-call-ingress
   namespace: video-call-prod
   annotations:
-    # ✅ 1. Yêu cầu Cert-Manager cấp SSL tự động
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    
-    # ✅ 2. Tự động chuyển HTTP → HTTPS
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    
-    # ✅ 3. Tăng giới hạn upload
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     
-    # ✅ 4. CẤU HÌNH WEBSOCKET
-    # Chỉ cần timeout, KHÔNG CẦN snippet chỉnh header
+    # ✅ WebSocket config
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
-    
-    # Chỉ định service dùng WebSocket
     nginx.ingress.kubernetes.io/websocket-services: "backend,livekit-tcp"
     
-    # ✅ 5. CORS (Nếu Backend Spring Boot đã cấu hình CORS thì có thể bỏ đoạn này)
-    # Nhưng để ở đây cũng được nếu bạn muốn Nginx chặn trước
+    # ✅ CORS
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://lkht.id.vn, https://livekit.lkht.id.vn"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
-
-    # ❌ ĐÃ XÓA configuration-snippet GÂY LỖI
+    
+    # ✅ WebSocket headers
+    # nginx.ingress.kubernetes.io/configuration-snippet: |
+    #   proxy_set_header Upgrade $http_upgrade;
+    #   proxy_set_header Connection "upgrade";
+    #   proxy_set_header Host $host;
+    #   proxy_set_header X-Real-IP $remote_addr;
+    #   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    #   proxy_set_header X-Forwarded-Proto $scheme;
 
 spec:
   ingressClassName: nginx
@@ -41,13 +39,9 @@ spec:
       secretName: video-call-tls-secret
   
   rules:
-    # ============================================
-    # Rule 1: Web App chính
-    # ============================================
     - host: lkht.id.vn
       http:
         paths:
-          # WebSocket P2P
           - path: /ws
             pathType: Prefix
             backend:
@@ -56,7 +50,6 @@ spec:
                 port:
                   number: 8080
           
-          # API Backend
           - path: /api
             pathType: Prefix
             backend:
@@ -65,7 +58,6 @@ spec:
                 port:
                   number: 8080
           
-          # Swagger UI
           - path: /swagger-ui
             pathType: Prefix
             backend:
@@ -82,7 +74,6 @@ spec:
                 port:
                   number: 8080
           
-          # Frontend React
           - path: /
             pathType: Prefix
             backend:
@@ -91,9 +82,6 @@ spec:
                 port:
                   number: 80
 
-    # ============================================
-    # Rule 2: LiveKit Server
-    # ============================================
     - host: livekit.lkht.id.vn
       http:
         paths:

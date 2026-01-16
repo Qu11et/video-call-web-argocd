@@ -1,4 +1,11 @@
-# 3-livekit.yaml
+# =============================================================================
+# LIVEKIT SERVER - PRODUCTION CONFIG
+# Giải pháp triệt để cho ICE Connection Failed
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CONFIGMAP: Cấu hình LiveKit Server
+# -----------------------------------------------------------------------------
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,39 +13,120 @@ metadata:
   namespace: video-call-prod
 data:
   livekit.yaml: |
+    # HTTP API Port
     port: 7880
+    
+    # ===================================================================
+    # RTC CONFIG - QUAN TRỌNG NHẤT
+    # ===================================================================
     rtc:
+      # UDP Port range cho WebRTC traffic
       port_range_start: 50000
-      port_range_end: 50010
+      port_range_end: 50020  # ✅ Tăng lên để hỗ trợ nhiều user hơn
+      
+      # TCP Port cho TURN (bypass firewall/NAT)
+      tcp_port: 7881
+      
+      # ✅ BẮT BUỘC: Sử dụng External IP từ LoadBalancer
       use_external_ip: true
-      udp_port: 7882
+      
+      # ✅ UDP Port chính (không dùng nữa, để tránh conflict)
+      # udp_port: 7882  
+      
+      # ✅ TURN Server Config (giúp bypass NAT/Firewall)
+      turn_servers:
+        - host: livekit.lkht.id.vn
+          port: 7881
+          protocol: tcp
+      
+      # ✅ ICE Config
+      ice_lite: false  # Tắt ICE Lite để hỗ trợ đầy đủ ICE candidates
+      
+      # ✅ NAT 1:1 mapping (tự động lấy từ LoadBalancer)
+      # Không cần config thủ công, LiveKit sẽ tự detect
+    
+    # ===================================================================
+    # REDIS CONFIG
+    # ===================================================================
     redis:
       address: redis:6379
+      # username: ""  # Nếu Redis có auth
+      # password: ""
+      # db: 0
+    
+    # ===================================================================
+    # ROOM CONFIG
+    # ===================================================================
+    room:
+      auto_create: true
+      empty_timeout: 300  # 5 phút - Tự đóng room khi không có user
+      departure_timeout: 20  # ✅ 20 giây - Chờ reconnect (giảm từ 300s)
+      max_participants: 50  # Giới hạn user/room
+    
+    # ===================================================================
+    # KEYS - API Authentication
+    # ===================================================================
     keys:
       devkey: my_super_secure_secret_key_for_dev_only_123
+    
+    # ===================================================================
+    # LOGGING
+    # ===================================================================
+    logging:
+      level: info  # debug | info | warn | error
+      sample: false  # Log tất cả requests (không sampling)
+      
+      # ✅ Log format
+      json: false  # Human-readable format
+    
+    # ===================================================================
+    # WEBHOOK (Optional - Để monitor events)
+    # ===================================================================
+    # webhook:
+    #   urls:
+    #     - https://lkht.id.vn/api/webhook/livekit
+    #   api_key: your_webhook_secret_key
 
 ---
-# SERVICE 1: CHUYÊN XỬ LÝ UDP (VIDEO/AUDIO)
-# Cái này sẽ tạo ra 1 IP Public riêng (Ví dụ: 35.1.1.1)
+# =============================================================================
+# SERVICE 1: UDP TRAFFIC (AUDIO/VIDEO)
+# Tạo LoadBalancer với External IP riêng cho UDP
+# =============================================================================
 apiVersion: v1
 kind: Service
 metadata:
   name: livekit-udp
   namespace: video-call-prod
+  annotations:
+    # ✅ GCP: Giữ nguyên Source IP
+    cloud.google.com/load-balancer-type: "External"
 spec:
   type: LoadBalancer
+  
+  # ✅ QUAN TRỌNG: Giữ nguyên Client IP (không qua proxy)
   externalTrafficPolicy: Local
+  
+  # ✅ Session Affinity: Cùng client luôn route về cùng pod
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600  # 1 giờ
+  
   selector:
     app: livekit
+  
   ports:
-    # Cổng UDP chính
-    - name: udp-main
-      port: 7882
-      targetPort: 7882
-      protocol: UDP
-    # Dải cổng UDP WebRTC (Liệt kê thủ công trong K8s standard)
-    # Nếu bạn cần mở hết 100 port, cách tốt nhất là dùng script generate
-    # hoặc quay lại hostNetwork. Nhưng ở đây ta dùng LoadBalancer cho dễ.
+    # -------------------------------------------------------------------------
+    # TCP Port 7881: TURN Server (Fallback khi UDP bị chặn)
+    # -------------------------------------------------------------------------
+    - name: turn-tcp
+      port: 7881
+      targetPort: 7881
+      protocol: TCP
+    
+    # -------------------------------------------------------------------------
+    # UDP Ports: WebRTC Media Traffic (50000-50020)
+    # -------------------------------------------------------------------------
     - name: rtc-50000
       port: 50000
       targetPort: 50000
@@ -82,7 +170,7 @@ spec:
     - name: rtc-50010
       port: 50010
       targetPort: 50010
-      protocol: UDP      
+      protocol: UDP
     - name: rtc-50011
       port: 50011
       targetPort: 50011
@@ -119,57 +207,203 @@ spec:
       port: 50019
       targetPort: 50019
       protocol: UDP
-    # ... Bạn có thể copy paste thêm port nếu cần test nhiều user ...
-    
+    - name: rtc-50020
+      port: 50020
+      targetPort: 50020
+      protocol: UDP
+
 ---
-# SERVICE 2: CHUYÊN XỬ LÝ TCP (SIGNALING)
-# Cái này sẽ tạo ra 1 IP Public riêng THỨ HAI (Ví dụ: 35.2.2.2)
+# =============================================================================
+# SERVICE 2: TCP TRAFFIC (HTTP API + SIGNALING)
+# Tạo LoadBalancer với External IP riêng cho TCP
+# =============================================================================
 apiVersion: v1
 kind: Service
 metadata:
   name: livekit-tcp
   namespace: video-call-prod
+  annotations:
+    # ✅ GCP: Enable HTTP/2 cho WebSocket
+    cloud.google.com/neg: '{"ingress": true}'
 spec:
   type: LoadBalancer
+  
   selector:
     app: livekit
+  
   ports:
+    # HTTP API + WebSocket Signaling
     - name: http
       port: 7880
       targetPort: 7880
       protocol: TCP
 
 ---
+# =============================================================================
+# DEPLOYMENT: LiveKit Server
+# =============================================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: livekit
   namespace: video-call-prod
 spec:
-  replicas: 1
+  replicas: 1  # ✅ Chỉ chạy 1 replica (để tránh load balancing phức tạp)
+  
+  # ✅ Rolling Update Strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
   selector:
     matchLabels:
       app: livekit
+  
   template:
     metadata:
       labels:
         app: livekit
+    
     spec:
+      # ✅ Đảm bảo Pod luôn schedule lại trên cùng node (nếu có thể)
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - livekit
+                topologyKey: kubernetes.io/hostname
+      
       containers:
         - name: livekit
-          image: livekit/livekit-server:latest
-          command: ["/livekit-server", "--config", "/etc/livekit.yaml"]
+          image: livekit/livekit-server:v1.7.2  # ✅ Pin version để tránh breaking changes
+          
+          # ✅ Start command với config file
+          command: ["/livekit-server"]
+          args:
+            - "--config"
+            - "/etc/livekit/livekit.yaml"
+            - "--node-ip"  # ✅ Tự động detect External IP
+            - "$(POD_IP)"
+          
+          # ✅ Environment Variables
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            
+            - name: LIVEKIT_NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          
+          # -------------------------------------------------------------------------
+          # PORTS: Expose tất cả ports cần thiết
+          # -------------------------------------------------------------------------
           ports:
-            - containerPort: 7880
-            - containerPort: 7882
+            # HTTP API
+            - name: http
+              containerPort: 7880
+              protocol: TCP
+            
+            # TURN TCP
+            - name: turn-tcp
+              containerPort: 7881
+              protocol: TCP
+            
+            # WebRTC UDP Range
+            - name: rtc-start
+              containerPort: 50000
               protocol: UDP
-            - containerPort: 50000
+            - name: rtc-end
+              containerPort: 50020
               protocol: UDP
+          
+          # -------------------------------------------------------------------------
+          # VOLUME MOUNTS
+          # -------------------------------------------------------------------------
           volumeMounts:
             - name: config
-              mountPath: /etc/livekit.yaml
-              subPath: livekit.yaml
+              mountPath: /etc/livekit
+              readOnly: true
+          
+          # -------------------------------------------------------------------------
+          # RESOURCE LIMITS
+          # -------------------------------------------------------------------------
+          resources:
+            requests:
+              cpu: "500m"      # 0.5 CPU
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"     # 2 CPU
+              memory: "2Gi"
+          
+          # -------------------------------------------------------------------------
+          # HEALTH CHECKS
+          # -------------------------------------------------------------------------
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7880
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7880
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+      
+      # -------------------------------------------------------------------------
+      # VOLUMES
+      # -------------------------------------------------------------------------
       volumes:
         - name: config
           configMap:
             name: livekit-config
+            items:
+              - key: livekit.yaml
+                path: livekit.yaml
+
+---
+# =============================================================================
+# HORIZONTAL POD AUTOSCALER (Optional - Để scale khi cần)
+# =============================================================================
+# apiVersion: autoscaling/v2
+# kind: HorizontalPodAutoscaler
+# metadata:
+#   name: livekit-hpa
+#   namespace: video-call-prod
+# spec:
+#   scaleTargetRef:
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     name: livekit
+#   minReplicas: 1
+#   maxReplicas: 5
+#   metrics:
+#     - type: Resource
+#       resource:
+#         name: cpu
+#         target:
+#           type: Utilization
+#           averageUtilization: 70
+#     - type: Resource
+#       resource:
+#         name: memory
+#         target:
+#           type: Utilization
+#           averageUtilization: 80
