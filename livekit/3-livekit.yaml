@@ -29,6 +29,11 @@ data:
       
       # ✅ BẮT BUỘC: Sử dụng External IP từ LoadBalancer
       use_external_ip: true
+
+      # ✅ THÊM: STUN servers (MIỄN PHÍ từ Google)
+      stun_servers:
+        - stun.l.google.com:19302
+        - stun1.l.google.com:19302
     
     # ===================================================================
     # REDIS CONFIG
@@ -256,43 +261,33 @@ spec:
       
       containers:
         - name: livekit
-          image: livekit/livekit-server:v1.8.3  # ✅ Pin version để tránh breaking changes
+          image: livekit/livekit-server:v1.9.3
           
-          # ✅ Start command với config file
           command: ["/livekit-server"]
           args:
             - "--config"
             - "/etc/livekit/livekit.yaml"
-            - "--node-ip"  # ✅ Tự động detect External IP
-            - "$(POD_IP)"
+            # ✅ QUAN TRỌNG: Tự động detect External IP
+            - "--node-ip"
+            - "$(EXTERNAL_IP)"
           
-          # ✅ Environment Variables
           env:
+            # ✅ Lấy External IP từ Service
+            - name: EXTERNAL_IP
+              value: "35.189.169.37"  # Thay bằng External IP thực tế của livekit-udp service
+            
             - name: POD_IP
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            
-            - name: LIVEKIT_NODE_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
           
-          # -------------------------------------------------------------------------
-          # PORTS: Expose tất cả ports cần thiết
-          # -------------------------------------------------------------------------
           ports:
-            # HTTP API
             - name: http
               containerPort: 7880
               protocol: TCP
-            
-            # TURN TCP
             - name: turn-tcp
               containerPort: 7881
               protocol: TCP
-            
-            # WebRTC UDP Range
             - name: rtc-start
               containerPort: 50000
               protocol: UDP
@@ -300,83 +295,20 @@ spec:
               containerPort: 50020
               protocol: UDP
           
-          # -------------------------------------------------------------------------
-          # VOLUME MOUNTS
-          # -------------------------------------------------------------------------
           volumeMounts:
             - name: config
               mountPath: /etc/livekit
               readOnly: true
           
-          # -------------------------------------------------------------------------
-          # RESOURCE LIMITS
-          # -------------------------------------------------------------------------
           resources:
             requests:
-              cpu: "500m"      # 0.5 CPU
+              cpu: "500m"
               memory: "512Mi"
             limits:
-              cpu: "2000m"     # 2 CPU
+              cpu: "2000m"
               memory: "2Gi"
-          
-          # -------------------------------------------------------------------------
-          # HEALTH CHECKS
-          # -------------------------------------------------------------------------
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 7880
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
-          
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 7880
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 2
       
-      # -------------------------------------------------------------------------
-      # VOLUMES
-      # -------------------------------------------------------------------------
       volumes:
         - name: config
           configMap:
             name: livekit-config
-            items:
-              - key: livekit.yaml
-                path: livekit.yaml
-
----
-# =============================================================================
-# HORIZONTAL POD AUTOSCALER (Optional - Để scale khi cần)
-# =============================================================================
-# apiVersion: autoscaling/v2
-# kind: HorizontalPodAutoscaler
-# metadata:
-#   name: livekit-hpa
-#   namespace: video-call-prod
-# spec:
-#   scaleTargetRef:
-#     apiVersion: apps/v1
-#     kind: Deployment
-#     name: livekit
-#   minReplicas: 1
-#   maxReplicas: 5
-#   metrics:
-#     - type: Resource
-#       resource:
-#         name: cpu
-#         target:
-#           type: Utilization
-#           averageUtilization: 70
-#     - type: Resource
-#       resource:
-#         name: memory
-#         target:
-#           type: Utilization
-#           averageUtilization: 80
