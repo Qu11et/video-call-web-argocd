@@ -24,8 +24,22 @@ data:
     keys:
       devkey: my_super_secure_secret_key_for_dev_only_123
     
+    # ===================================================================
+    # LOGGING CONFIG - QUAN TRỌNG NHẤT
+    # ===================================================================
     logging:
-      level: info
+      level: debug  # ✅ THAY ĐỔI: info -> debug (chi tiết nhất)
+      sample: false  # ✅ Log tất cả requests (không sampling)
+      json: false    # ✅ Human-readable format
+      
+      # ✅ THÊM: Log chi tiết từng component
+      pion: debug    # WebRTC engine logs
+      sample_rate: 1  # Log 100% requests
+    
+    # ===================================================================
+    # DEVELOPMENT MODE (THÊM CHO DEBUG)
+    # ===================================================================
+    development: true  # ✅ Bật dev mode để log chi tiết hơn
     
     webhook:
       urls:
@@ -157,6 +171,27 @@ spec:
       containers:
         - name: livekit
           image: livekit/livekit-server:latest
+
+          # ✅ THÊM: Environment Variables cho logging
+          env:
+            # Pion WebRTC logging (thư viện WebRTC của LiveKit)
+            - name: PION_LOG_TRACE
+              value: "all"  # Log tất cả WebRTC events
+            
+            - name: PION_LOG_DEBUG
+              value: "true"
+            
+            # LiveKit internal logging
+            - name: LIVEKIT_LOG_LEVEL
+              value: "debug"
+            
+            # ✅ THÊM: Log ICE candidates (quan trọng nhất)
+            - name: LOG_ICE
+              value: "true"
+            
+            # ✅ THÊM: Log media packets
+            - name: LOG_RTC_PACKETS
+              value: "true"
           
           command: ["/livekit-server"]
           args:
