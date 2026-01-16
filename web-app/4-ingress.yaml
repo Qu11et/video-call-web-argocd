@@ -1,47 +1,62 @@
-# web-app/4-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: video-call-ingress
   namespace: video-call-prod
   annotations:
-    # 1. Chỉ định dùng Nginx Controller
-    kubernetes.io/ingress.class: nginx
-    
-    # 2. Yêu cầu Cert-Manager cấp chứng chỉ SSL tự động
+    # ✅ 1. Yêu cầu Cert-Manager cấp SSL tự động
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     
-    # 3. Tự động chuyển HTTP sang HTTPS
+    # ✅ 2. Tự động chuyển HTTP → HTTPS
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     
-    # 4. Tăng giới hạn upload (quan trọng nếu upload file/ảnh)
+    # ✅ 3. Tăng giới hạn upload (cho avatar/file)
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    # --- CẤU HÌNH QUAN TRỌNG CHO WEBSOCKET ---
+    
+    # ✅ 4. CẤU HÌNH WEBSOCKET (QUAN TRỌNG)
+    # Timeout dài để giữ kết nối WebSocket không bị ngắt
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/websocket-services: "livekit-tcp"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    
+    # Chỉ định services nào sử dụng WebSocket (phân cách bằng dấu phẩy)
+    nginx.ingress.kubernetes.io/websocket-services: "backend,livekit-tcp"
+    
+    # ✅ 5. CORS cho API (Quan trọng!)
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://lkht.id.vn, https://livekit.lkht.id.vn"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    
+    # ✅ 6. WebSocket upgrade headers (để đảm bảo handshake đúng)
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
 
 spec:
-  # Cấu hình TLS (HTTPS)
+  # ✅ Chỉ định Ingress Controller (thay vì dùng annotation cũ)
+  ingressClassName: nginx
+  
+  # ✅ Cấu hình TLS (HTTPS)
   tls:
     - hosts:
         - lkht.id.vn
-        - livekit.lkht.id.vn   
-      secretName: video-call-tls-secret # Cert-manager sẽ lưu chứng chỉ vào đây
+        - livekit.lkht.id.vn
+      secretName: video-call-tls-secret
+  
   rules:
-    # Rule 1: Cho Web App (Giữ nguyên)
+    # ============================================
+    # Rule 1: Web App chính (lkht.id.vn)
+    # ============================================
     - host: lkht.id.vn
       http:
         paths:
-          # API Backend
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: backend
-                port:
-                  number: 8080
-          # WebSocket
+          # ✅ WebSocket P2P (Ưu tiên cao nhất - phải đặt trước /api)
           - path: /ws
             pathType: Prefix
             backend:
@@ -49,7 +64,34 @@ spec:
                 name: backend
                 port:
                   number: 8080
-          # Frontend React
+          
+          # ✅ API Backend
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          
+          # ✅ Swagger UI (để test API)
+          - path: /swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          
+          - path: /v3/api-docs
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          
+          # ✅ Frontend React (Phải để cuối cùng)
           - path: /
             pathType: Prefix
             backend:
@@ -58,7 +100,9 @@ spec:
                 port:
                   number: 80
 
-    # Rule 2: Cho LiveKit Signaling (MỚI)
+    # ============================================
+    # Rule 2: LiveKit Server (livekit.lkht.id.vn)
+    # ============================================
     - host: livekit.lkht.id.vn
       http:
         paths:
@@ -66,6 +110,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: livekit-tcp # Trỏ vào Service TCP cũ của LiveKit
+                name: livekit-tcp
                 port:
-                  number: 7880              
+                  number: 7880
