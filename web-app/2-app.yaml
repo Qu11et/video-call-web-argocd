@@ -24,8 +24,8 @@ data:
     # --- CẤU HÌNH DATABASE (PostgreSQL) ---
     # Format: jdbc:postgresql://<host>:<port>/<tên_db>
     spring.datasource.url=jdbc:postgresql://postgres-cluster.postgres-operator.svc.cluster.local:5432/video_call_db
-    spring.datasource.username=postgres
-    spring.datasource.password=123456
+    spring.datasource.username=zalando
+    spring.datasource.password=5Lszsi8kAcwVcVaHQt4KRd29DNpVRGkVH0biXxCjTXPyeGkIHYdnrAxp9nouaUhp
     spring.datasource.driver-class-name=org.postgresql.Driver
 
     # --- CẤU HÌNH MONGODB MỚI ---
