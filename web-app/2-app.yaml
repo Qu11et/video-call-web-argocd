@@ -25,7 +25,7 @@ data:
     # Format: jdbc:postgresql://<host>:<port>/<tên_db>
     spring.datasource.url=jdbc:postgresql://postgres-cluster.postgres-operator.svc.cluster.local:5432/video_call_db
     spring.datasource.username=zalando
-    spring.datasource.password=5Lszsi8kAcwVcVaHQt4KRd29DNpVRGkVH0biXxCjTXPyeGkIHYdnrAxp9nouaUhp
+    spring.datasource.password=DCpR2tfsekr72Smtu49Q31dw9q1VgiOcqjcPrRky66CQV3JYjz0KcRtjB1q0kUN3
     spring.datasource.driver-class-name=org.postgresql.Driver
 
     # --- CẤU HÌNH MONGODB MỚI ---

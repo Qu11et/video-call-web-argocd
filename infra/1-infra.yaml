@@ -33,49 +33,49 @@ spec:
               memory: "64Mi"
               cpu: "50m"
 ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: postgres
-#   namespace: video-call-prod
-# spec:
-#   ports:
-#     - port: 5432
-#   selector:
-#     app: postgres
-# ---
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: postgres
-#   namespace: video-call-prod
-# spec:
-#   replicas: 1
-#   selector:
-#     matchLabels:
-#       app: postgres
-#   template:
-#     metadata:
-#       labels:
-#         app: postgres
-#     spec:
-#       containers:
-#         - name: postgres
-#           image: postgres:17
-#           env:
-#             - name: POSTGRES_USER
-#               value: "postgres"
-#             - name: POSTGRES_PASSWORD
-#               value: "123456"
-#             - name: POSTGRES_DB
-#               value: "video_call_db"
-#           volumeMounts:
-#             - name: pgdata
-#               mountPath: /var/lib/postgresql/data
-#       volumes:
-#         - name: pgdata
-#           emptyDir: {} # Lưu ý: Dùng PVC nếu muốn lưu dữ liệu vĩnh viễn
-# ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: video-call-prod
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: video-call-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "123456"
+            - name: POSTGRES_DB
+              value: "video_call_db"
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: pgdata
+          emptyDir: {} # Lưu ý: Dùng PVC nếu muốn lưu dữ liệu vĩnh viễn
+---
 apiVersion: v1
 kind: Service
 metadata:
