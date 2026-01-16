@@ -155,6 +155,6 @@ spec:
       containers:
         - name: frontend
           # Thay bằng Image Frontend của bạn
-          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend:260116
+          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend:260116-2
           ports:
             - containerPort: 80
