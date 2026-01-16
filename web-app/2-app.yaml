@@ -78,8 +78,6 @@ data:
     spring.mail.password=rcmvqygmtbthlotz
     spring.mail.properties.mail.smtp.auth=true
     spring.mail.properties.mail.smtp.starttls.enable=true
-
-
 ---
 apiVersion: v1
 kind: Service
@@ -87,7 +85,7 @@ metadata:
   name: backend
   namespace: video-call-prod
 spec:
-  type: ClusterIP  
+  type: ClusterIP
   ports:
     - port: 8080
       targetPort: 8080
@@ -130,7 +128,7 @@ metadata:
   name: frontend
   namespace: video-call-prod
 spec:
-  type: ClusterIP  
+  type: ClusterIP
   ports:
     - port: 80
       targetPort: 80
@@ -155,6 +153,6 @@ spec:
       containers:
         - name: frontend
           # Thay bằng Image Frontend của bạn
-          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend:260116-5
+          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend:9793db9
           ports:
             - containerPort: 80
