@@ -45,7 +45,7 @@ data:
     spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
     # --- JWT CONFIG (Giữ nguyên) ---
-    application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    #application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     # Thời gian hết hạn Access Token (1 ngày = 86400000 ms)
     application.security.jwt.expiration=86400000
     # Thời gian hết hạn Refresh Token (7 ngày)
