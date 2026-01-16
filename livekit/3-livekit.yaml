@@ -31,10 +31,6 @@ data:
       level: debug  # ✅ THAY ĐỔI: info -> debug (chi tiết nhất)
       sample: false  # ✅ Log tất cả requests (không sampling)
       json: false    # ✅ Human-readable format
-      
-      # ✅ THÊM: Log chi tiết từng component
-      pion: debug    # WebRTC engine logs
-      sample_rate: 1  # Log 100% requests
     
     # ===================================================================
     # DEVELOPMENT MODE (THÊM CHO DEBUG)
