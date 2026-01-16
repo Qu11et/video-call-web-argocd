@@ -1,6 +1,5 @@
 # =============================================================================
-# FILE: 3-livekit.yaml
-# CHIẾN LƯỢC: SIGNALING QUA INGRESS (WSS) - MEDIA QUA NODEPORT (UDP)
+# CHIẾN LƯỢC: Container listen 50000-50020, expose qua NodePort 30000-30020
 # =============================================================================
 
 apiVersion: v1
@@ -12,73 +11,93 @@ data:
   livekit.yaml: |
     port: 7880
     
-    # --- CẤU HÌNH QUAN TRỌNG NHẤT ---
+    # ===================================================================
+    # RTC CONFIG - QUAN TRỌNG
+    # Container LUÔN listen ở 50000-50020 (không thay đổi)
+    # K8s sẽ tự động map sang NodePort 30000-30020
+    # ===================================================================
     rtc:
-      # Dùng dải port NodePort của K8s (30000-32767)
-      port_range_start: 30000
-      port_range_end: 30020
+      # ✅ Port range TRONG CONTAINER (không đổi)
+      port_range_start: 50000
+      port_range_end: 50020
       
-      # Port UDP chính để quảng bá
-      udp_port: 30000
+      # ✅ TCP Port cho TURN fallback
+      tcp_port: 7881
       
-      # Port TCP dự phòng
-      tcp_port: 30881
-      
-      # Để LiveKit tự hỏi Google STUN xem "IP Public của tao là gì?"
+      # ✅ Để LiveKit tự detect External IP từ STUN
       use_external_ip: true
       
+      # ✅ Thêm STUN servers
       stun_servers:
         - stun.l.google.com:19302
         - stun1.l.google.com:19302
-
+    
     redis:
       address: redis:6379
     
+    room:
+      auto_create: true
+      empty_timeout: 300
+      departure_timeout: 20
+      max_participants: 50
+    
     keys:
       devkey: my_super_secure_secret_key_for_dev_only_123
-
+    
     logging:
-      level: info
+      level: debug  # ✅ Tăng lên debug để troubleshoot
+      sample: false
+      json: false
 
 ---
-# SERVICE HỢP NHẤT (Dùng NodePort để mở toang cửa cho UDP)
+# =============================================================================
+# SERVICE: NodePort để expose UDP ra ngoài
+# =============================================================================
 apiVersion: v1
 kind: Service
 metadata:
   name: livekit
   namespace: video-call-prod
-  # Giữ tên service này là "livekit" hoặc "livekit-tcp" 
-  # để Ingress cũ của bạn vẫn trỏ vào đúng
   labels:
     app: livekit
 spec:
   type: NodePort
-  externalTrafficPolicy: Local
+  externalTrafficPolicy: Local  # ✅ Giữ nguyên Client IP
+  sessionAffinity: ClientIP      # ✅ Sticky sessions
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+  
   selector:
     app: livekit
+  
   ports:
-    # 1. Cổng Tín hiệu (Ingress gọi vào đây)
+    # -------------------------------------------------------------------------
+    # HTTP API + WebSocket Signaling (Ingress sẽ gọi vào đây)
+    # -------------------------------------------------------------------------
     - name: http
       port: 7880
       targetPort: 7880
       protocol: TCP
-      
-    # 2. Cổng TURN (Dự phòng)
+    
+    # -------------------------------------------------------------------------
+    # TURN TCP Fallback
+    # -------------------------------------------------------------------------
     - name: turn-tcp
       port: 7881
       targetPort: 7881
       nodePort: 30881
       protocol: TCP
-
-    # 3. Cổng VIDEO UDP (Quan trọng nhất - Đi thẳng ra internet)
-    # Chúng ta map Port 50000 trong container ra Port 30000 ngoài Node
-    - name: rtc-udp-main
+    
+    # -------------------------------------------------------------------------
+    # UDP Media Ports: 50000-50020 (container) → 30000-30020 (node)
+    # -------------------------------------------------------------------------
+    - name: rtc-50000
       port: 50000
       targetPort: 50000
       nodePort: 30000
       protocol: UDP
-      
-    - name: rtc-udp-1
+    - name: rtc-50001
       port: 50001
       targetPort: 50001
       nodePort: 30001
@@ -173,13 +192,16 @@ spec:
       targetPort: 50019
       nodePort: 30019
       protocol: UDP
-    - name: rtc-udp-end
+    - name: rtc-50020
       port: 50020
       targetPort: 50020
       nodePort: 30020
       protocol: UDP
 
 ---
+# =============================================================================
+# DEPLOYMENT: LiveKit Server
+# =============================================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -187,53 +209,75 @@ metadata:
   namespace: video-call-prod
 spec:
   replicas: 1
+  
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
   selector:
     matchLabels:
       app: livekit
+  
   template:
     metadata:
       labels:
         app: livekit
+    
     spec:
       containers:
         - name: livekit
+          # ✅ SỬA: Dùng version stable mới nhất
           image: livekit/livekit-server:v1.9.3
           
-          # ✅ GHI ĐÈ các biến môi trường tự động
+          command: ["/livekit-server"]
+          args:
+            - "--config"
+            - "/etc/livekit/livekit.yaml"
+          
+          # ✅ Environment Variables
           env:
             - name: LIVEKIT_PORT
-              value: "7880"  # ✅ Fix lỗi parsing
+              value: "7880"
             
             - name: POD_IP
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
           
-          command: 
-            - /livekit-server
-          args:
-            - --config
-            - /etc/livekit/livekit.yaml
-          
+          # -------------------------------------------------------------------------
+          # PORTS: Expose tất cả ports
+          # -------------------------------------------------------------------------
           ports:
             - name: http
               containerPort: 7880
               protocol: TCP
+            
             - name: turn-tcp
               containerPort: 7881
               protocol: TCP
+            
+            # ✅ UDP Range (Container listen ở 50000-50020)
             - name: rtc-start
               containerPort: 50000
               protocol: UDP
+            
             - name: rtc-end
               containerPort: 50020
               protocol: UDP
           
+          # -------------------------------------------------------------------------
+          # VOLUME MOUNTS
+          # -------------------------------------------------------------------------
           volumeMounts:
             - name: config
               mountPath: /etc/livekit
+              readOnly: true
           
-          # ✅ THÊM: Resource limits
+          # -------------------------------------------------------------------------
+          # RESOURCE LIMITS
+          # -------------------------------------------------------------------------
           resources:
             requests:
               cpu: "500m"
@@ -242,13 +286,17 @@ spec:
               cpu: "2000m"
               memory: "2Gi"
           
-          # ✅ THÊM: Health checks
+          # -------------------------------------------------------------------------
+          # HEALTH CHECKS - QUAN TRỌNG
+          # -------------------------------------------------------------------------
           livenessProbe:
             httpGet:
               path: /
               port: 7880
             initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           
           readinessProbe:
             httpGet:
@@ -256,7 +304,12 @@ spec:
               port: 7880
             initialDelaySeconds: 10
             periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
       
+      # -------------------------------------------------------------------------
+      # VOLUMES
+      # -------------------------------------------------------------------------
       volumes:
         - name: config
           configMap:
