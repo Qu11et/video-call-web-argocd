@@ -30,38 +30,29 @@ data:
       # ✅ BẮT BUỘC: Sử dụng External IP từ LoadBalancer
       use_external_ip: true
       
-      # ✅ UDP Port chính (không dùng nữa, để tránh conflict)
-      # udp_port: 7882  
-      
       # ✅ TURN Server Config (giúp bypass NAT/Firewall)
       turn_servers:
         - host: livekit.lkht.id.vn
           port: 7881
           protocol: tcp
       
-      # ✅ ICE Config
-      ice_lite: false  # Tắt ICE Lite để hỗ trợ đầy đủ ICE candidates
-      
-      # ✅ NAT 1:1 mapping (tự động lấy từ LoadBalancer)
-      # Không cần config thủ công, LiveKit sẽ tự detect
+      # ✅ XÓA dòng ice_lite (không còn support trong v1.7.2)
+      # ice_lite: false  # ← XÓA DÒNG NÀY
     
     # ===================================================================
     # REDIS CONFIG
     # ===================================================================
     redis:
       address: redis:6379
-      # username: ""  # Nếu Redis có auth
-      # password: ""
-      # db: 0
     
     # ===================================================================
     # ROOM CONFIG
     # ===================================================================
     room:
       auto_create: true
-      empty_timeout: 300  # 5 phút - Tự đóng room khi không có user
-      departure_timeout: 20  # ✅ 20 giây - Chờ reconnect (giảm từ 300s)
-      max_participants: 50  # Giới hạn user/room
+      empty_timeout: 300
+      departure_timeout: 20
+      max_participants: 50
     
     # ===================================================================
     # KEYS - API Authentication
@@ -73,19 +64,9 @@ data:
     # LOGGING
     # ===================================================================
     logging:
-      level: info  # debug | info | warn | error
-      sample: false  # Log tất cả requests (không sampling)
-      
-      # ✅ Log format
-      json: false  # Human-readable format
-    
-    # ===================================================================
-    # WEBHOOK (Optional - Để monitor events)
-    # ===================================================================
-    # webhook:
-    #   urls:
-    #     - https://lkht.id.vn/api/webhook/livekit
-    #   api_key: your_webhook_secret_key
+      level: info
+      sample: false
+      json: false
 
 ---
 # =============================================================================
