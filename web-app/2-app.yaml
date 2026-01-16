@@ -110,7 +110,7 @@ spec:
       containers:
         - name: backend
           # Thay bằng Image Backend của bạn
-          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend:044d4da
+          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend:085bb37
           ports:
             - containerPort: 8080
           volumeMounts:
