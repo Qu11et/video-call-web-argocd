@@ -16,14 +16,20 @@ metadata:
     
     # 4. Tăng giới hạn upload (quan trọng nếu upload file/ảnh)
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    # --- CẤU HÌNH QUAN TRỌNG CHO WEBSOCKET ---
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "livekit-tcp"
 
 spec:
   # Cấu hình TLS (HTTPS)
   tls:
     - hosts:
         - lkht.id.vn
+        - livekit.lkht.id.vn   
       secretName: video-call-tls-secret # Cert-manager sẽ lưu chứng chỉ vào đây
   rules:
+    # Rule 1: Cho Web App (Giữ nguyên)
     - host: lkht.id.vn
       http:
         paths:
@@ -51,3 +57,15 @@ spec:
                 name: frontend
                 port:
                   number: 80
+
+    # Rule 2: Cho LiveKit Signaling (MỚI)
+    - host: livekit.lkht.id.vn
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: livekit-tcp # Trỏ vào Service TCP cũ của LiveKit
+                port:
+                  number: 7880              

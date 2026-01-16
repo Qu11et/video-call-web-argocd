@@ -62,7 +62,7 @@ data:
 
     # --- LIVEKIT CONFIG ---
     # URL mặc định nếu không có biến môi trường (Docker sẽ ghi đè giá trị này)
-    livekit.url=ws://34.80.190.105:7880
+    livekit.url=wss://livekit.lkht.id.vn
     livekit.api.key=devkey
     livekit.api.secret=my_super_secure_secret_key_for_dev_only_123
 
@@ -112,7 +112,7 @@ spec:
       containers:
         - name: backend
           # Thay bằng Image Backend của bạn
-          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend:260116 
+          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend:260116-2 
           ports:
             - containerPort: 8080
           volumeMounts:
