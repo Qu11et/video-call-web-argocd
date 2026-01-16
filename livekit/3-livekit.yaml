@@ -1,11 +1,7 @@
 # =============================================================================
-# LIVEKIT SERVER - PRODUCTION CONFIG
-# Giải pháp triệt để cho ICE Connection Failed
+# CONFIG: Giống VM nhưng tách TCP và UDP
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# CONFIGMAP: Cấu hình LiveKit Server
-# -----------------------------------------------------------------------------
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,212 +9,132 @@ metadata:
   namespace: video-call-prod
 data:
   livekit.yaml: |
-    # HTTP API Port
     port: 7880
     
-    # ===================================================================
-    # RTC CONFIG - QUAN TRỌNG NHẤT
-    # ===================================================================
     rtc:
-      # UDP Port range cho WebRTC traffic
       port_range_start: 50000
-      port_range_end: 50020  # ✅ Tăng lên để hỗ trợ nhiều user hơn
-      
-      # TCP Port cho TURN (bypass firewall/NAT)
-      tcp_port: 7881
-      
-      # ✅ BẮT BUỘC: Sử dụng External IP từ LoadBalancer
+      port_range_end: 50100
       use_external_ip: true
-
-      # ✅ THÊM: STUN servers (MIỄN PHÍ từ Google)
-      stun_servers:
-        - stun.l.google.com:19302
-        - stun1.l.google.com:19302
+      udp_port: 7882
+      tcp_port: 7881
     
-    # ===================================================================
-    # REDIS CONFIG
-    # ===================================================================
     redis:
       address: redis:6379
     
-    # ===================================================================
-    # ROOM CONFIG
-    # ===================================================================
-    room:
-      auto_create: true
-      empty_timeout: 300
-      departure_timeout: 20
-      max_participants: 50
-    
-    # ===================================================================
-    # KEYS - API Authentication
-    # ===================================================================
     keys:
       devkey: my_super_secure_secret_key_for_dev_only_123
     
-    # ===================================================================
-    # LOGGING
-    # ===================================================================
     logging:
-      level: debug
-      sample: false
-      json: false
-
----
-# =============================================================================
-# SERVICE 1: UDP TRAFFIC (AUDIO/VIDEO)
-# Tạo LoadBalancer với External IP riêng cho UDP
-# =============================================================================
-apiVersion: v1
-kind: Service
-metadata:
-  name: livekit-udp
-  namespace: video-call-prod
-  annotations:
-    # ✅ GCP: Cho phép tất cả IP kết nối
-    networking.gke.io/load-balancer-type: "External"
-spec:
-  type: LoadBalancer
-  externalTrafficPolicy: Local
-  
-  # ✅ QUAN TRỌNG: Cho phép tất cả source IPs
-  loadBalancerSourceRanges:
-    - 0.0.0.0/0
-  
-  sessionAffinity: ClientIP
-  sessionAffinityConfig:
-    clientIP:
-      timeoutSeconds: 3600
-  
-  selector:
-    app: livekit
-  
-  ports:
-    # -------------------------------------------------------------------------
-    # TCP Port 7881: TURN Server (Fallback khi UDP bị chặn)
-    # -------------------------------------------------------------------------
-    - name: turn-tcp
-      port: 7881
-      targetPort: 7881
-      protocol: TCP
+      level: info
     
-    # -------------------------------------------------------------------------
-    # UDP Ports: WebRTC Media Traffic (50000-50020)
-    # -------------------------------------------------------------------------
-    - name: rtc-50000
-      port: 50000
-      targetPort: 50000
-      protocol: UDP
-    - name: rtc-50001
-      port: 50001
-      targetPort: 50001
-      protocol: UDP
-    - name: rtc-50002
-      port: 50002
-      targetPort: 50002
-      protocol: UDP
-    - name: rtc-50003
-      port: 50003
-      targetPort: 50003
-      protocol: UDP
-    - name: rtc-50004
-      port: 50004
-      targetPort: 50004
-      protocol: UDP
-    - name: rtc-50005
-      port: 50005
-      targetPort: 50005
-      protocol: UDP
-    - name: rtc-50006
-      port: 50006
-      targetPort: 50006
-      protocol: UDP
-    - name: rtc-50007
-      port: 50007
-      targetPort: 50007
-      protocol: UDP
-    - name: rtc-50008
-      port: 50008
-      targetPort: 50008
-      protocol: UDP
-    - name: rtc-50009
-      port: 50009
-      targetPort: 50009
-      protocol: UDP
-    - name: rtc-50010
-      port: 50010
-      targetPort: 50010
-      protocol: UDP
-    - name: rtc-50011
-      port: 50011
-      targetPort: 50011
-      protocol: UDP
-    - name: rtc-50012
-      port: 50012
-      targetPort: 50012
-      protocol: UDP
-    - name: rtc-50013
-      port: 50013
-      targetPort: 50013
-      protocol: UDP
-    - name: rtc-50014
-      port: 50014
-      targetPort: 50014
-      protocol: UDP
-    - name: rtc-50015
-      port: 50015
-      targetPort: 50015
-      protocol: UDP
-    - name: rtc-50016
-      port: 50016
-      targetPort: 50016
-      protocol: UDP
-    - name: rtc-50017
-      port: 50017
-      targetPort: 50017
-      protocol: UDP
-    - name: rtc-50018
-      port: 50018
-      targetPort: 50018
-      protocol: UDP
-    - name: rtc-50019
-      port: 50019
-      targetPort: 50019
-      protocol: UDP
-    - name: rtc-50020
-      port: 50020
-      targetPort: 50020
-      protocol: UDP
+    webhook:
+      urls:
+        - "https://lkht.id.vn/api/webhook/livekit"
+      api_key: "devkey"
 
 ---
 # =============================================================================
-# SERVICE 2: TCP TRAFFIC (HTTP API + SIGNALING)
-# Tạo LoadBalancer với External IP riêng cho TCP
+# SERVICE 1: TCP ONLY (HTTP + TURN TCP)
 # =============================================================================
 apiVersion: v1
 kind: Service
 metadata:
   name: livekit-tcp
   namespace: video-call-prod
-  annotations:
-    # ✅ GCP: Enable HTTP/2 cho WebSocket
-    cloud.google.com/neg: '{"ingress": true}'
 spec:
   type: LoadBalancer
+  externalTrafficPolicy: Local
   
   selector:
     app: livekit
   
   ports:
-    # HTTP API + WebSocket Signaling
+    # HTTP API + WebSocket
     - name: http
       port: 7880
       targetPort: 7880
       protocol: TCP
+    
+    # TURN TCP
+    - name: turn-tcp
+      port: 7881
+      targetPort: 7881
+      protocol: TCP
 
 ---
 # =============================================================================
-# DEPLOYMENT: LiveKit Server
+# SERVICE 2: UDP ONLY (TURN UDP + WebRTC Media)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit-udp
+  namespace: video-call-prod
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  sessionAffinity: ClientIP
+  
+  selector:
+    app: livekit
+  
+  ports:
+    # TURN UDP
+    - name: turn-udp
+      port: 7882
+      targetPort: 7882
+      protocol: UDP
+    
+    # WebRTC Media Ports (chỉ expose 1 số port đại diện)
+    # LiveKit sẽ tự động sử dụng các port trong range 50000-50100
+    - name: rtc-50000
+      port: 50000
+      targetPort: 50000
+      protocol: UDP
+    - name: rtc-50010
+      port: 50010
+      targetPort: 50010
+      protocol: UDP
+    - name: rtc-50020
+      port: 50020
+      targetPort: 50020
+      protocol: UDP
+    - name: rtc-50030
+      port: 50030
+      targetPort: 50030
+      protocol: UDP
+    - name: rtc-50040
+      port: 50040
+      targetPort: 50040
+      protocol: UDP
+    - name: rtc-50050
+      port: 50050
+      targetPort: 50050
+      protocol: UDP
+    - name: rtc-50060
+      port: 50060
+      targetPort: 50060
+      protocol: UDP
+    - name: rtc-50070
+      port: 50070
+      targetPort: 50070
+      protocol: UDP
+    - name: rtc-50080
+      port: 50080
+      targetPort: 50080
+      protocol: UDP
+    - name: rtc-50090
+      port: 50090
+      targetPort: 50090
+      protocol: UDP
+    - name: rtc-50100
+      port: 50100
+      targetPort: 50100
+      protocol: UDP
+
+---
+# =============================================================================
+# DEPLOYMENT: Giống VM
 # =============================================================================
 apiVersion: apps/v1
 kind: Deployment
@@ -226,14 +142,7 @@ metadata:
   name: livekit
   namespace: video-call-prod
 spec:
-  replicas: 1  # ✅ Chỉ chạy 1 replica (để tránh load balancing phức tạp)
-  
-  # ✅ Rolling Update Strategy
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+  replicas: 1
   
   selector:
     matchLabels:
@@ -245,41 +154,14 @@ spec:
         app: livekit
     
     spec:
-      # ✅ Đảm bảo Pod luôn schedule lại trên cùng node (nếu có thể)
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - livekit
-                topologyKey: kubernetes.io/hostname
-      
       containers:
         - name: livekit
-          image: livekit/livekit-server:v1.9.3
+          image: livekit/livekit-server:latest
           
           command: ["/livekit-server"]
           args:
             - "--config"
-            - "/etc/livekit/livekit.yaml"
-            # ✅ QUAN TRỌNG: Tự động detect External IP
-            - "--node-ip"
-            - "$(EXTERNAL_IP)"
-          
-          env:
-            # ✅ Lấy External IP từ Service
-            - name: EXTERNAL_IP
-              value: "35.189.169.37"  # Thay bằng External IP thực tế của livekit-udp service
-            
-            - name: POD_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
+            - "/etc/livekit.yaml"
           
           ports:
             - name: http
@@ -288,17 +170,20 @@ spec:
             - name: turn-tcp
               containerPort: 7881
               protocol: TCP
+            - name: turn-udp
+              containerPort: 7882
+              protocol: UDP
             - name: rtc-start
               containerPort: 50000
               protocol: UDP
             - name: rtc-end
-              containerPort: 50020
+              containerPort: 50100
               protocol: UDP
           
           volumeMounts:
             - name: config
-              mountPath: /etc/livekit
-              readOnly: true
+              mountPath: /etc/livekit.yaml
+              subPath: livekit.yaml
           
           resources:
             requests:
@@ -307,6 +192,20 @@ spec:
             limits:
               cpu: "2000m"
               memory: "2Gi"
+          
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7880
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7880
+            initialDelaySeconds: 10
+            periodSeconds: 5
       
       volumes:
         - name: config
