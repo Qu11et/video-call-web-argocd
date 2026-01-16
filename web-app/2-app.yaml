@@ -110,9 +110,13 @@ spec:
       containers:
         - name: backend
           # Thay bằng Image Backend của bạn
-          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend:260116-4
+          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend:085bb37
           ports:
             - containerPort: 8080
+          # ✅ THÊM: Environment variable để Spring Boot biết đường dẫn config
+          env:
+            - name: SPRING_CONFIG_LOCATION
+              value: file:/app/config/application.properties  
           volumeMounts:
             - name: config-volume
               mountPath: /app/config/application.properties
