@@ -53,12 +53,14 @@ data:
 
     # --- COOKIE CONFIG (Lưu Token an toàn) ---
     # Domain của cookie: Đặt là tên miền của bạn để cookie hoạt động trên https://lkht.id.vn
-    application.cookie.domain=lkht.id.vn
+    application.cookie.domain=
     # Secure: true (chỉ gửi qua HTTPS). Nếu test localhost thì để false, nhưng lên VPS nên là true.
     # Tuy nhiên, do Nginx xử lý SSL và chuyển vào trong là HTTP, đôi khi để false an toàn hơn để tránh lỗi logic nội bộ
-    application.cookie.secure=false
+    application.cookie.secure=true
     application.cookie.http-only=true
     application.cookie.max-age=86400
+    application.cookie.same-site=None
+    application.cookie.path=/
 
     # --- LIVEKIT CONFIG ---
     # URL mặc định nếu không có biến môi trường (Docker sẽ ghi đè giá trị này)
@@ -110,7 +112,7 @@ spec:
       containers:
         - name: backend
           # Thay bằng Image Backend của bạn
-          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend:260117
+          image: anhtaiht/bk:v5
           ports:
             - containerPort: 8080
 
