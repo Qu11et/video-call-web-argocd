@@ -24,14 +24,7 @@ data:
     # --- CẤU HÌNH DATABASE (PostgreSQL) ---
     # Format: jdbc:postgresql://<host>:<port>/<tên_db>
     spring.datasource.url=jdbc:postgresql://postgres-cluster.postgres-operator.svc.cluster.local:5432/video_call_db
-    spring.datasource.username=zalando
-    spring.datasource.password=DCpR2tfsekr72Smtu49Q31dw9q1VgiOcqjcPrRky66CQV3JYjz0KcRtjB1q0kUN3
     spring.datasource.driver-class-name=org.postgresql.Driver
-
-    # --- CẤU HÌNH MONGODB MỚI ---
-    # Format: mongodb://username:password@host:port/database_name?authSource=admin11111
-    # 'mongo' là tên service trong docker-compose
-    spring.data.mongodb.uri=mongodb://root:password123@mongo:27017/meeting_history_db?authSource=admin
 
     # Tự động tạo index (để tìm kiếm nhanh)
     spring.data.mongodb.auto-index-creation=true
@@ -52,10 +45,7 @@ data:
     application.security.jwt.refresh-token.expiration=604800000
 
     # --- COOKIE CONFIG (Lưu Token an toàn) ---
-    # Domain của cookie: Đặt là tên miền của bạn để cookie hoạt động trên https://lkht.id.vn
-    application.cookie.domain=
-    # Secure: true (chỉ gửi qua HTTPS). Nếu test localhost thì để false, nhưng lên VPS nên là true.
-    # Tuy nhiên, do Nginx xử lý SSL và chuyển vào trong là HTTP, đôi khi để false an toàn hơn để tránh lỗi logic nội bộ
+    application.cookie.domain=lkht.id.vn
     application.cookie.secure=true
     application.cookie.http-only=true
     application.cookie.max-age=86400
@@ -63,10 +53,7 @@ data:
     application.cookie.path=/
 
     # --- LIVEKIT CONFIG ---
-    # URL mặc định nếu không có biến môi trường (Docker sẽ ghi đè giá trị này)
     livekit.url=wss://livekit.lkht.id.vn
-    livekit.api.key=devkey
-    livekit.api.secret=my_super_secure_secret_key_for_dev_only_123
 
     # --- CẤU HÌNH REDIS ---
     spring.data.redis.host=redis
@@ -75,9 +62,6 @@ data:
     # --- CẤU HÌNH EMAIL (Gmail SMTP) ---
     spring.mail.host=smtp.gmail.com
     spring.mail.port=587
-    spring.mail.username=khautyler@gmail.com
-    # Lưu ý: Đây là App Password (không phải pass đăng nhập gmail), bạn phải tạo trong Google Account Security
-    spring.mail.password=rcmvqygmtbthlotz
     spring.mail.properties.mail.smtp.auth=true
     spring.mail.properties.mail.smtp.starttls.enable=true
 ---
@@ -117,14 +101,57 @@ spec:
             - containerPort: 8080
 
           env:
-            # ✅ Load JWT secret từ Kubernetes Secret
+            # JWT Secret
             - name: APPLICATION_SECURITY_JWT_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: backend-jwt-secret
-                  key: jwt-secret-key
+                  name: video-call-secrets
+                  key: JWT_SECRET_KEY
             
-            # ✅ Load config từ ConfigMap
+            # Database credentials
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: video-call-secrets
+                  key: DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: video-call-secrets
+                  key: DB_PASSWORD
+            
+            # MongoDB URI
+            - name: SPRING_DATA_MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: video-call-secrets
+                  key: MONGO_URI
+            
+            # Email credentials
+            - name: SPRING_MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: video-call-secrets
+                  key: EMAIL_USERNAME
+            - name: SPRING_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: video-call-secrets
+                  key: EMAIL_PASSWORD
+            
+            # LiveKit credentials
+            - name: LIVEKIT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: video-call-secrets
+                  key: LIVEKIT_API_KEY
+            - name: LIVEKIT_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: video-call-secrets
+                  key: LIVEKIT_API_SECRET
+            
+            # Load config từ ConfigMap
             - name: SPRING_CONFIG_LOCATION
               value: file:/app/config/application.properties
                 
