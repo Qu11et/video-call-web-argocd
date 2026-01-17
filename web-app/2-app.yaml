@@ -96,10 +96,9 @@ spec:
       containers:
         - name: backend
           # Thay bằng Image Backend của bạn
-          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend:260117-2
+          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-backend:77e9d6d
           ports:
             - containerPort: 8080
-
           env:
             # JWT Secret
             - name: APPLICATION_SECURITY_JWT_SECRET_KEY
@@ -154,7 +153,6 @@ spec:
             # Load config từ ConfigMap
             - name: SPRING_CONFIG_LOCATION
               value: file:/app/config/application.properties
-                
           volumeMounts:
             - name: config-volume
               mountPath: /app/config
