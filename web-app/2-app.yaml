@@ -106,7 +106,6 @@ spec:
                 secretKeyRef:
                   name: video-call-secrets
                   key: JWT_SECRET_KEY
-            
             # Database credentials
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
@@ -118,14 +117,12 @@ spec:
                 secretKeyRef:
                   name: video-call-secrets
                   key: DB_PASSWORD
-            
             # MongoDB URI
             - name: SPRING_DATA_MONGODB_URI
               valueFrom:
                 secretKeyRef:
                   name: video-call-secrets
                   key: MONGO_URI
-            
             # Email credentials
             - name: SPRING_MAIL_USERNAME
               valueFrom:
@@ -137,7 +134,6 @@ spec:
                 secretKeyRef:
                   name: video-call-secrets
                   key: EMAIL_PASSWORD
-            
             # LiveKit credentials
             - name: LIVEKIT_API_KEY
               valueFrom:
@@ -149,7 +145,6 @@ spec:
                 secretKeyRef:
                   name: video-call-secrets
                   key: LIVEKIT_API_SECRET
-            
             # Load config từ ConfigMap
             - name: SPRING_CONFIG_LOCATION
               value: file:/app/config/application.properties
@@ -193,6 +188,6 @@ spec:
       containers:
         - name: frontend
           # Thay bằng Image Frontend của bạn
-          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend:9793db9
+          image: asia-southeast1-docker.pkg.dev/helical-chemist-471003-u9/video-call-repo/video-call-frontend:66c2000
           ports:
             - containerPort: 80
